@@ -4,6 +4,8 @@ import os
 from PIL import Image, ImageTk
 import io
 import random
+import google.generativeai as genai
+import os
 
 """
 Simple Image Browser based on PySimpleGUI
@@ -28,7 +30,7 @@ if not folder:
     raise SystemExit()
 
 # PIL supported image types
-img_types = (".png", ".jpg", "jpeg", ".tiff", ".bmp")
+img_types = ('.png', '.jpg', 'jpeg', '.tiff', '.bmp')
 
 # get list of files in folder
 flist0 = os.listdir(folder)
@@ -56,7 +58,7 @@ def get_img_data(f, maxsize=(1200, 850), first=False):
     img.thumbnail(maxsize)
     if first:                     # tkinter is inactive the first time
         bio = io.BytesIO()
-        img.save(bio, format="PNG")
+        img.save(bio, format='PNG')
         del img
         return bio.getvalue()
     return ImageTk.PhotoImage(img)
@@ -69,24 +71,26 @@ filename = os.path.join(folder, fnames[0])  # name of first file in list
 compare_filename = os.path.join(folder, fnames[0])
 if(num_files > 1):
     compare_filename = os.path.join(folder, fnames[1])
-image_elem = sg.Image(data=get_img_data(filename, first=True), enable_events=True, key="-BASEIMG-")
-compare_image_elem = sg.Image(data=get_img_data(compare_filename, first=True), enable_events=True, key="-COMPAREIMG-")
+image_elem = sg.Image(data=get_img_data(filename, first=True), enable_events=True, key='-BASEIMG-')
+compare_image_elem = sg.Image(data=get_img_data(compare_filename, first=True), enable_events=True, key='-COMPAREIMG-')
 filename_display_elem = sg.Text(filename, size=(80, 3))
 compare_filename_display_elem = sg.Text(compare_filename, size=(80, 3))
 file_num_display_elem = sg.Text('File 1 of {}'.format(num_files), size=(15, 1))
 
 # define layout, show and read the form
-col = [[filename_display_elem],
-       [compare_image_elem]]
+col = [[compare_image_elem],[filename_display_elem]]
 
-compare_col = [[compare_filename_display_elem],
-       [image_elem]]
+compare_col = [[image_elem], [compare_filename_display_elem]]
 
-col_files = [[sg.Listbox(values=fnames, change_submits=True, size=(60, 30), key='listbox')],
+col_files = [[sg.Listbox(values=fnames, change_submits=True, size=(60, 30), key='listbox', default_values=fnames[0])],
              [sg.Button('Next', size=(8, 2)), sg.Button('Prev', size=(8, 2)), file_num_display_elem],
-             [sg.Button('Random', size=(8,2))]]
+             [sg.Button('Random', size=(8,2))],
+             [
+                sg.Button('Gemini Eval (left photo)', key='-Gemini photo eval-', size=(8,2)), 
+                sg.Button('Gemini Compare', key='-Gemini photo compare-', size=(8,2))
+             ]]
 
-layout = [[sg.Column(col_files), sg.Column(col), sg.Column(compare_col)]]
+layout = [[sg.Column(col_files), sg.Column(compare_col), sg.Column(col)]]
 
 window = sg.Window('Image Ranker', layout, return_keyboard_events=True,
                    location=(0, 0), use_default_focus=False)
@@ -94,6 +98,7 @@ window = sg.Window('Image Ranker', layout, return_keyboard_events=True,
 # loop reading the user input and displaying image, filename
 i = 0
 j = 0
+
 while True:
     # read the form
     event, values = window.read()
@@ -106,11 +111,15 @@ while True:
         if i >= num_files:
             i -= num_files
         filename = os.path.join(folder, fnames[i])
+        listbox = window['listbox']
+        listbox.update(set_to_index=[i], scroll_to_index=i)
     elif event in ('Prev', 'MouseWheel:Up', 'Up:38', 'Prior:33'):
         i -= 1
         if i < 0:
             i = num_files + i
         filename = os.path.join(folder, fnames[i])
+        listbox = window['listbox']
+        listbox.update(set_to_index=[i], scroll_to_index=i)
     elif event in ('Random'):
         i = random.randrange(0,num_files)
         j = random.randrange(0,num_files)
@@ -119,7 +128,7 @@ while True:
         filename = os.path.join(folder, fnames[i])
         compare_filename = os.path.join(folder, fnames[j])
     elif event == 'listbox':            # something from the listbox
-        f = values["listbox"][0]            # selected filename
+        f = values['listbox'][0]            # selected filename
         filename = os.path.join(folder, f)  # read this file
         i = fnames.index(f)                 # update running index
     elif event == '-BASEIMG-':
@@ -130,6 +139,32 @@ while True:
         while(j == i):
             j = random.randrange(0,num_files)        
         compare_filename = os.path.join(folder, fnames[j])        
+    elif event == '-Gemini photo eval-':
+        if 'GEMINI_API_KEY' not in os.environ:
+            sg.popup('No Gemini Key in os.environ, cannot perform AI evaluation')
+        else:
+            gemini_key = os.environ['GEMINI_API_KEY']
+            genai.configure(api_key=gemini_key)
+            model = genai.GenerativeModel(model_name='gemini-2.5-flash')
+            filename = os.path.join(folder, fnames[i])
+            image_for_gemini = Image.open(filename)
+            response = model.generate_content(['Rate this image for sharpness on a scale of 0-10', image_for_gemini])
+
+            sg.popup(f'Gemini evaluation for {filename}:\n\n {response.text}')
+    elif event == '-Gemini photo compare-':
+        if 'GEMINI_API_KEY' not in os.environ:
+            sg.popup('No Gemini Key in os.environ, cannot perform AI comparison')
+        else:
+            gemini_key = os.environ['GEMINI_API_KEY']
+            genai.configure(api_key=gemini_key)
+            model = genai.GenerativeModel(model_name='gemini-2.5-flash')
+            file1 = os.path.join(folder, fnames[i])
+            file2 = os.path.join(folder, fnames[j])
+            image1 = Image.open(file1)
+            image2 = Image.open(file2)
+            response = model.generate_content(['Compare these two images and indicate which one is sharper', image1, image2])
+
+            sg.popup(f'Gemini comparison for {file1} vs {file2}:\n\n {response.text}')   
     else:
         filename = os.path.join(folder, fnames[i])
 
