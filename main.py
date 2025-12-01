@@ -67,10 +67,13 @@ def get_img_data(f, maxsize=(1200, 850), first=False):
 
 # make these 2 elements outside the layout as we want to "update" them later
 # initialize to the first file in the list
-filename = os.path.join(folder, fnames[0])  # name of first file in list
+i = 0
+j = 0
+filename = os.path.join(folder, fnames[i])  # name of first file in list
 compare_filename = os.path.join(folder, fnames[0])
 if(num_files > 1):
-    compare_filename = os.path.join(folder, fnames[1])
+    j = 1
+    compare_filename = os.path.join(folder, fnames[j])
 image_elem = sg.Image(data=get_img_data(filename, first=True), enable_events=True, key='-BASEIMG-')
 compare_image_elem = sg.Image(data=get_img_data(compare_filename, first=True), enable_events=True, key='-COMPAREIMG-')
 filename_display_elem = sg.Text(filename, size=(80, 3))
@@ -86,8 +89,9 @@ col_files = [[sg.Listbox(values=fnames, change_submits=True, size=(60, 30), key=
              [sg.Button('Next', size=(8, 2)), sg.Button('Prev', size=(8, 2)), file_num_display_elem],
              [sg.Button('Random', size=(8,2))],
              [
-                sg.Button('Gemini Eval (left photo)', key='-Gemini photo eval-', size=(8,2)), 
-                sg.Button('Gemini Compare', key='-Gemini photo compare-', size=(8,2))
+                sg.Button('Gemini Eval (left photo)', key='-Gemini photo eval-', size=(8,2)),
+                sg.Button('Gemini Compare', key='-Gemini photo compare-', size=(8,2)),
+                sg.Button('Gemini Rank next 5', key='-Gemini photo rank-', size=(8,2))
              ]]
 
 layout = [[sg.Column(col_files), sg.Column(compare_col), sg.Column(col)]]
@@ -96,8 +100,6 @@ window = sg.Window('Image Ranker', layout, return_keyboard_events=True,
                    location=(0, 0), use_default_focus=False)
 
 # loop reading the user input and displaying image, filename
-i = 0
-j = 0
 
 while True:
     # read the form
@@ -111,15 +113,11 @@ while True:
         if i >= num_files:
             i -= num_files
         filename = os.path.join(folder, fnames[i])
-        listbox = window['listbox']
-        listbox.update(set_to_index=[i], scroll_to_index=i)
     elif event in ('Prev', 'MouseWheel:Up', 'Up:38', 'Prior:33'):
         i -= 1
         if i < 0:
             i = num_files + i
         filename = os.path.join(folder, fnames[i])
-        listbox = window['listbox']
-        listbox.update(set_to_index=[i], scroll_to_index=i)
     elif event in ('Random'):
         i = random.randrange(0,num_files)
         j = random.randrange(0,num_files)
@@ -140,6 +138,7 @@ while True:
             j = random.randrange(0,num_files)        
         compare_filename = os.path.join(folder, fnames[j])        
     elif event == '-Gemini photo eval-':
+        # asks Gemini to evaluate the sharpness of the current photo on a scale of 0-10
         if 'GEMINI_API_KEY' not in os.environ:
             sg.popup('No Gemini Key in os.environ, cannot perform AI evaluation')
         else:
@@ -151,7 +150,10 @@ while True:
             response = model.generate_content(['Rate this image for sharpness on a scale of 0-10', image_for_gemini])
 
             sg.popup(f'Gemini evaluation for {filename}:\n\n {response.text}')
+            image_for_gemini.close()
     elif event == '-Gemini photo compare-':
+        # this will ask Gemini to compare the two photos on screen for sharpness
+        # the result from Gemini will pop on screen
         if 'GEMINI_API_KEY' not in os.environ:
             sg.popup('No Gemini Key in os.environ, cannot perform AI comparison')
         else:
@@ -162,12 +164,52 @@ while True:
             file2 = os.path.join(folder, fnames[j])
             image1 = Image.open(file1)
             image2 = Image.open(file2)
-            response = model.generate_content(['Compare these two images and indicate which one is sharper', image1, image2])
+            response = model.generate_content(['Compare these two images and indicate which picture is technically superior. Start your response with 1 or 2 to indicate which image is the answer before giving details. If they are equivalent, randomly select 1 or 2.', image1, image2])
 
-            sg.popup(f'Gemini comparison for {file1} vs {file2}:\n\n {response.text}')   
+            # print the full response for now, might remove this later
+            print(f'Gemini comparison for {file1} vs {file2}:\n\n {response.text}')
+            if(response.text.startswith("1")):
+                sg.popup(f"Gemini votes for image1: {file1}")
+            else:
+                sg.popup(f"Gemini votes for image2: {file2}")
+            image1.close()
+            image2.close()
+    elif event == '-Gemini photo rank-':
+        # this will ask Google to rank the currently selected photo along with the next 4 in the list
+        # the rankings are based on Googles perception of sharpness of the image
+        if 'GEMINI_API_KEY' not in os.environ:
+            sg.popup('No Gemini Key in os.environ, cannot perform AI ranking')
+        else:
+            gemini_key = os.environ['GEMINI_API_KEY']
+            genai.configure(api_key=gemini_key)
+            model = genai.GenerativeModel(model_name='gemini-2.5-flash')
+            k = i
+            query_contents = []
+            query_image_names = []
+            while k < num_files:
+                file1 = os.path.join(folder, fnames[k])
+                image1 = Image.open(file1)
+                query_contents.append(image1)
+                query_image_names.append(fnames[k])
+                k += 1
+                if len(query_contents) == 5 or len(query_contents) == num_files:
+                    # if all files are in the query contents, or 5 files are in, break out
+                    break
+                elif k >= num_files:
+                    # this wraps k around from the bottom to the top of the list
+                    k = 0
+                image1.close()
+            query_contents.append('rank these photos by sharpness, return the result as a list of the image names')
+            query_contents.append(f'the image names in order are {','.join(query_image_names)}')
+            response = model.generate_content(query_contents)
+
+            sg.popup(f'Gemini image ranking:\n\n {response.text}')
     else:
         filename = os.path.join(folder, fnames[i])
 
+    # update the selection in the listbox to the left side photo
+    listbox = window['listbox']
+    listbox.update(set_to_index=[i], scroll_to_index=i)
     # update window with new image
     image_elem.update(data=get_img_data(filename, first=True))
     compare_image_elem.update(data=get_img_data(compare_filename, first=True))
