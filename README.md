@@ -10,6 +10,23 @@ Getting Started
 4. Install the requirements
    `pip3 install -r requirements.txt`
 
+Using gemini to evaluate photos
+===============================
+
+Gemini evaluation of individual photos requires a Gemini API key.
+The Gemini API key can be obtained from ai.google.dev , see:
+https://ai.google.dev/gemini-api/docs/api-key
+
+The key should be set as an env variable, such as in your
+.bashrc file or explicitly at the command line:
+
+```
+https://ai.google.dev/gemini-api/docs/api-key
+```
+
+If this key is not set, Gemini functionality will not be available
+
+
 Running the Application
 =======================
 
