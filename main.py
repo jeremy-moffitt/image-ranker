@@ -52,10 +52,6 @@ class ImageRanker:
     def convert_to_bytes(self, file_path, maxsize=(720, 480)):
         """Generate image data using PIL
         """
-        if not isinstance(file_path, (str, os.PathLike)):
-            raise TypeError(f'Expected a path, got {type(file_path)}')
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f'Image file not found: {file_path}')
         try:
             img = Image.open(file_path)
             img.thumbnail(maxsize)
