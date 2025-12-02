@@ -3,3 +3,4 @@ venv
 images
 .idea
 .env
+rank.csv
