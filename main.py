@@ -272,7 +272,7 @@ class ImageRanker:
             window['-RANK_TABLE-'].update(values=self.get_ranking_table_data())
 
         if both:
-            self.cycle_image(keep, false)
+            self.cycle_image(window, keep, False)
 
     def run(self):
         api_key = os.getenv('GEMINI_API_KEY')
@@ -294,7 +294,6 @@ class ImageRanker:
             ],
             [sg.HorizontalSeparator()],
             [
-                # sg.Button('Rankings', key='-RANKINGS-'),
                 sg.Button('Gemini Eval - left photo', key='-EVAL_LEFT_PHOTO-'),
                 sg.Button('Gemini Comparison', key='-COMPARE_PHOTO-'),
                 sg.Button('Export ranking to CSV', key='-EXPORT_CSV-'),
