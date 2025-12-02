@@ -9,6 +9,8 @@ Getting Started
    `source imagenv/bin/activate`
 4. Install the requirements
    `pip3 install -r requirements.txt`
+5. Create the environment variable file and paste your Gemini API Key
+   `cp .env.example .env`
 
 Using gemini to evaluate photos
 ===============================

@@ -1,1 +1,5 @@
 imagenv
+venv
+images
+.idea
+.env
