@@ -341,11 +341,12 @@ class ImageRanker:
 
         col_files = [[sg.Listbox(values=self.image_files, change_submits=True, size=(60, 30), key='listbox')],
                     [sg.Button('Next', size=(8, 2)), sg.Button('Prev', size=(8, 2)), file_num_display_elem],
-                    [sg.Button('Switch to Vote Mode', key='-SWITCH_VOTE_MODE-')]]
+                    [sg.Button('Switch to Vote Mode', key='-SWITCH_VOTE_MODE-'),
+                     sg.Button('Exit App', key='-EXIT-')]]
 
         layout = [[sg.Column(col_files), sg.Column(col)]]
 
-        window = sg.Window('Image Browser', layout, return_keyboard_events=True,
+        window = sg.Window('Image Browser', layout, return_keyboard_events=True, finalize=True,
                         use_default_focus=False)
 
         # loop reading the user input and displaying image, filename
@@ -355,7 +356,7 @@ class ImageRanker:
             event, values = window.read()
             
             # perform button and keyboard operations
-            if event == sg.WIN_CLOSED:
+            if event in (sg.WIN_CLOSED, '-EXIT-'):
                 break
             elif event in ('Next', 'MouseWheel:Down', 'Down:40', 'Next:34'):
                 i += 1
@@ -372,8 +373,9 @@ class ImageRanker:
                 filename = os.path.join(self.folder_path, f)  # read this file
                 i = self.image_files.index(f)                 # update running index
             elif event == '-SWITCH_VOTE_MODE-':
-                window.hide()
+                window.close()
                 self.get_vote_mode()
+                break
             else:
                 filename = os.path.join(self.folder_path, self.image_files[i])
 
@@ -467,9 +469,10 @@ class ImageRanker:
             elif event == '-COMPARE_PHOTO-':
                 self.get_image_comparison(api_key, window)
             elif event == '-SWITCH_VIEW_ONLY-':
-                window.hide()
+                window.close()
                 self.get_view_mode_window()
-                 
+                break
+                
         window.close()
 
 
@@ -505,12 +508,14 @@ class ImageRanker:
             if event in (sg.WIN_CLOSED, '-EXIT-'):
                 break
             elif event == '-VOTE_MODE-':
-                window.hide()
+                window.close()
                 self.get_vote_mode()
+                break
             elif event == '-VIEW_ONLY_MODE-':
-                window.hide()
+                window.close()
                 self.get_view_mode_window()
-                
+                break
+
         window.close()
    
 
