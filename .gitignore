@@ -4,3 +4,4 @@ images
 .idea
 .env
 rank.csv
+local_cache

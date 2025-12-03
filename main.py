@@ -3,6 +3,7 @@ import os
 import io
 import random
 import csv
+import json
 import google.generativeai as genai
 from PIL import Image
 from dotenv import load_dotenv
@@ -17,12 +18,18 @@ class ImageRanker:
         self.rankings = {}
         self.current_left = None
         self.current_right = None
+        self.cache_dir = './local_cache/'
+        self.cache_file = 'rankings.data'
 
 
     def select_folder(self):
         """ Pop-up folder selection for the user to choose the location of images on the filesystem
         """
-        folder = sg.popup_get_folder('Image folder to open', default_path='./images')
+        default_folder_path = './images'
+        cache_data = self.read_rankings_from_disk()
+        if 'latest_folder' in cache_data:
+            default_folder_path = cache_data['latest_folder']
+        folder = sg.popup_get_folder('Image folder to open', default_path=default_folder_path)
 
         if not folder:
             sg.popup_cancel('Canceling')
@@ -30,6 +37,16 @@ class ImageRanker:
 
         self.folder_path = folder
         self.load_images()
+
+        # update any loaded image data with the ranking data from previous runs
+        # can't just overwrite it since the files in the folder may have changed
+        cached_ranking_data = {}
+        if 'rankings' in cache_data and self.folder_path in cache_data['rankings']:
+            cached_ranking_data = cache_data['rankings'][self.folder_path]
+            for image_name, image_votes in cached_ranking_data.items():
+                if image_name in self.rankings:
+                    self.rankings[image_name] = image_votes
+
         return len(self.image_files) >= 2
         # create sub list of image files (no sub folders, no wrong file types)
         
@@ -274,6 +291,42 @@ class ImageRanker:
         if both:
             self.cycle_image(window, keep, False)
 
+
+    def read_rankings_from_disk(self):
+        """ reads the current rankings and other settings from disk
+        """
+        cache_path = self.cache_dir + self.cache_file
+        cache_data = {}
+        if(os.path.exists(cache_path)):
+            try:
+                with open(cache_path, mode='r') as cache_file:
+                    cache_data = json.load(cache_file)
+            except IOError as e:
+                print(f'Error opening file {cache_path} : {e}')
+
+        return cache_data
+
+    def write_rankings_to_disk(self):
+        """ writes the current rankings and other settings to disk
+        """
+        cache_path = self.cache_dir + self.cache_file
+        cache_data = self.read_rankings_from_disk()
+
+        cache_data['latest_folder'] = self.folder_path
+        if 'rankings' not in cache_data:
+            cache_data['rankings'] = {}
+        cache_data['rankings'][self.folder_path] = self.rankings
+
+        try:
+            if not os.path.isdir(self.cache_dir):
+                os.mkdir(self.cache_dir)
+            with open(cache_path, mode='w') as cache_file:
+                cache_file.write(json.dumps(cache_data))
+        except IOError as e:
+                print(f'Error writing to file {cache_path} : {e}')
+
+
+
     def run(self):
         api_key = os.getenv('GEMINI_API_KEY')
         ranking_header = ['rank', 'image_name', 'votes']
@@ -338,6 +391,7 @@ class ImageRanker:
             event, values = window.read()
 
             if event in (sg.WIN_CLOSED, '-EXIT-'):
+                self.write_rankings_to_disk()
                 break
             elif event == '-IMAGE1-':
                 self.record_selection('left')
