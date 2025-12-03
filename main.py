@@ -342,7 +342,7 @@ class ImageRanker:
             [image_elem]]
 
         col_files = [[sg.Listbox(values=self.image_files, change_submits=True, size=(60, 30), key='listbox')],
-                    [sg.Button('Next', size=(8, 2)), sg.Button('Gemini Eval', key='-GEMINI_EVAL-', size=(10, 2)), sg.Button('Prev', size=(8, 2)), file_num_display_elem],
+                    [sg.Button('Gemini Eval', key='-GEMINI_EVAL-', size=(10, 2)), sg.Button('Next', size=(8, 2)), sg.Button('Prev', size=(8, 2)), file_num_display_elem],
                     [sg.Button('Switch to Vote Mode', key='-SWITCH_VOTE_MODE-'),
                      sg.Button('Exit App', key='-EXIT-')]]
 
