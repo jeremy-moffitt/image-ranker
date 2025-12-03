@@ -7,6 +7,7 @@ import json
 import google.generativeai as genai
 from PIL import Image
 from dotenv import load_dotenv
+from utils.imageutils import resize_image
 
 load_dotenv()
 
@@ -326,7 +327,8 @@ class ImageRanker:
                 print(f'Error writing to file {cache_path} : {e}')
 
 
-    def get_view_mode_window(self, vote_window):
+    def get_view_mode_window(self):
+        
         num_files = len(self.image_files)
         filename = os.path.join(self.folder_path, self.image_files[0])  # name of first file in list
         image_elem = sg.Image(data=self.convert_to_bytes(filename))
@@ -338,12 +340,13 @@ class ImageRanker:
             [image_elem]]
 
         col_files = [[sg.Listbox(values=self.image_files, change_submits=True, size=(60, 30), key='listbox')],
-                    [sg.Button('Next', size=(8, 2)), sg.Button('Prev', size=(8, 2)), file_num_display_elem]]
+                    [sg.Button('Next', size=(8, 2)), sg.Button('Prev', size=(8, 2)), file_num_display_elem],
+                    [sg.Button('Switch to Vote Mode', key='-SWITCH_VOTE_MODE-')]]
 
         layout = [[sg.Column(col_files), sg.Column(col)]]
 
         window = sg.Window('Image Browser', layout, return_keyboard_events=True,
-                        location=(0, 0), use_default_focus=False)
+                        use_default_focus=False)
 
         # loop reading the user input and displaying image, filename
         i = 0
@@ -353,7 +356,6 @@ class ImageRanker:
             
             # perform button and keyboard operations
             if event == sg.WIN_CLOSED:
-                vote_window.un_hide()
                 break
             elif event in ('Next', 'MouseWheel:Down', 'Down:40', 'Next:34'):
                 i += 1
@@ -369,6 +371,9 @@ class ImageRanker:
                 f = values["listbox"][0]            # selected filename
                 filename = os.path.join(self.folder_path, f)  # read this file
                 i = self.image_files.index(f)                 # update running index
+            elif event == '-SWITCH_VOTE_MODE-':
+                window.hide()
+                self.get_vote_mode()
             else:
                 filename = os.path.join(self.folder_path, self.image_files[i])
 
@@ -384,14 +389,11 @@ class ImageRanker:
         window.close()
 
 
-    def run(self):
+    def get_vote_mode(self):
+        
         api_key = os.getenv('GEMINI_API_KEY')
         ranking_header = ['rank', 'image_name', 'votes']
-
-        if not self.select_folder():
-            sg.popup_error('Please select a valid folder')
-            return
-        
+   
         layout = [
             [
                 sg.Column([
@@ -421,7 +423,7 @@ class ImageRanker:
                     expand_x=True,
                     expand_y=False
                 )
-            ] 
+            ]
         ]
 
         window = sg.Window('Image Ranker', layout, finalize=True, resizable=True)
@@ -466,10 +468,51 @@ class ImageRanker:
                 self.get_image_comparison(api_key, window)
             elif event == '-SWITCH_VIEW_ONLY-':
                 window.hide()
-                self.get_view_mode_window(window)
-                
+                self.get_view_mode_window()
+                 
         window.close()
 
+
+    def run(self):
+        if not self.select_folder():
+            sg.popup_error('Please select a valid folder')
+            return
+        
+        ballot_icon = './assets/ballot-icon.png'
+        view_image_icon = './assets/view-image-icon.png'
+
+        layout = [
+            [sg.Text("Choose a mode:")],
+            [
+                
+                sg.Column([
+                        [sg.Button(image_data=resize_image(ballot_icon, (100, 100)), border_width=0, button_color=(sg.theme_background_color(), sg.theme_background_color()), key='-VOTE_MODE-')],
+                        [sg.Text("Vote Mode")]
+                ], element_justification='center'),
+                sg.VSeparator(),
+                sg.Column([
+                        [sg.Button(image_data=resize_image(view_image_icon, (100, 100)), border_width=0, button_color=(sg.theme_background_color(), sg.theme_background_color()), key='-VIEW_ONLY_MODE-')],
+                        [sg.Text("View Images")]
+                ], element_justification='center'),
+            ]
+        ]
+
+        window = sg.Window('Image Ranker - Mode Selection', layout, finalize=True, resizable=True)
+
+        while True:
+            event, values = window.read()
+
+            if event in (sg.WIN_CLOSED, '-EXIT-'):
+                break
+            elif event == '-VOTE_MODE-':
+                window.hide()
+                self.get_vote_mode()
+            elif event == '-VIEW_ONLY_MODE-':
+                window.hide()
+                self.get_view_mode_window()
+                
+        window.close()
+   
 
 def main():
     app = ImageRanker()

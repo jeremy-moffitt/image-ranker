@@ -5,3 +5,4 @@ images
 .env
 rank.csv
 local_cache
+__pycache__/
