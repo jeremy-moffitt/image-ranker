@@ -195,7 +195,7 @@ class ImageRanker:
         sg.popup_ok('CSV created successfully!')
 
 
-    def get_image_eval(self, api_key):
+    def get_image_eval(self, api_key, filename):
         """ asks Gemini for image evaluation
             
             Parameters
@@ -205,7 +205,7 @@ class ImageRanker:
         gemini_key = api_key
         genai.configure(api_key=gemini_key)
         model = genai.GenerativeModel(model_name='gemini-2.5-flash')
-        filename = os.path.join(self.folder_path, self.current_left)
+        # filename = os.path.join(self.folder_path, image_name)
         image_for_gemini = Image.open(filename)
         response = model.generate_content(['Rate this image for sharpness on a scale of 0-10', image_for_gemini])
         formatted_text = f'Gemini evaluation for {filename}:\n\n {response.text}'
@@ -219,7 +219,7 @@ class ImageRanker:
         ]
         window = sg.Window('Gemini - Image Evaluation', layout)
 
-        while True: # 
+        while True:  
             sec_event, sec_values = window.read()
             if sec_event == sg.WIN_CLOSED or sec_event == 'Close':
                 break
@@ -229,6 +229,7 @@ class ImageRanker:
 
         window.close()
     
+
     def get_image_comparison(self, api_key, window):
         """ asks Gemini for image evaluation
             
@@ -261,6 +262,7 @@ class ImageRanker:
         print(f'Gemini full voting response:\n {formatted_text}')
         image1.close()
         image2.close()
+
 
     def cycle_image(self, window, side, both):
         """ asks Gemini for image evaluation
@@ -328,7 +330,7 @@ class ImageRanker:
 
 
     def get_view_mode_window(self):
-        
+        api_key = os.getenv('GEMINI_API_KEY')
         num_files = len(self.image_files)
         filename = os.path.join(self.folder_path, self.image_files[0])  # name of first file in list
         image_elem = sg.Image(data=self.convert_to_bytes(filename))
@@ -340,7 +342,7 @@ class ImageRanker:
             [image_elem]]
 
         col_files = [[sg.Listbox(values=self.image_files, change_submits=True, size=(60, 30), key='listbox')],
-                    [sg.Button('Next', size=(8, 2)), sg.Button('Prev', size=(8, 2)), file_num_display_elem],
+                    [sg.Button('Gemini Eval', key='-GEMINI_EVAL-', size=(10, 2)), sg.Button('Next', size=(8, 2)), sg.Button('Prev', size=(8, 2)), file_num_display_elem],
                     [sg.Button('Switch to Vote Mode', key='-SWITCH_VOTE_MODE-'),
                      sg.Button('Exit App', key='-EXIT-')]]
 
@@ -372,6 +374,9 @@ class ImageRanker:
                 f = values["listbox"][0]            # selected filename
                 filename = os.path.join(self.folder_path, f)  # read this file
                 i = self.image_files.index(f)                 # update running index
+            elif event == '-GEMINI_EVAL-':
+                filename = os.path.join(self.folder_path, self.image_files[i])
+                self.get_image_eval(api_key, filename)
             elif event == '-SWITCH_VOTE_MODE-':
                 window.close()
                 self.get_vote_mode()
@@ -465,7 +470,8 @@ class ImageRanker:
                 window['-RANK_TABLE-'].update(values=self.get_ranking_table_data())
                 self.generate_rank_csv(ranking_header, self.get_ranking_table_data())
             elif event == '-EVAL_LEFT_PHOTO-':
-                self.get_image_eval(api_key)
+                img1_path = os.path.join(self.folder_path, self.current_left)
+                self.get_image_eval(api_key, img1_path)
             elif event == '-COMPARE_PHOTO-':
                 self.get_image_comparison(api_key, window)
             elif event == '-SWITCH_VIEW_ONLY-':
