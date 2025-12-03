@@ -326,6 +326,63 @@ class ImageRanker:
                 print(f'Error writing to file {cache_path} : {e}')
 
 
+    def get_view_mode_window(self, vote_window):
+        num_files = len(self.image_files)
+        filename = os.path.join(self.folder_path, self.image_files[0])  # name of first file in list
+        image_elem = sg.Image(data=self.convert_to_bytes(filename))
+        filename_display_elem = sg.Text(filename, size=(80, 3))
+        file_num_display_elem = sg.Text('File 1 of {}'.format(num_files), size=(15, 1))
+
+        # define layout, show and read the form
+        col = [[filename_display_elem],
+            [image_elem]]
+
+        col_files = [[sg.Listbox(values=self.image_files, change_submits=True, size=(60, 30), key='listbox')],
+                    [sg.Button('Next', size=(8, 2)), sg.Button('Prev', size=(8, 2)), file_num_display_elem]]
+
+        layout = [[sg.Column(col_files), sg.Column(col)]]
+
+        window = sg.Window('Image Browser', layout, return_keyboard_events=True,
+                        location=(0, 0), use_default_focus=False)
+
+        # loop reading the user input and displaying image, filename
+        i = 0
+        while True:
+            # read the form
+            event, values = window.read()
+            
+            # perform button and keyboard operations
+            if event == sg.WIN_CLOSED:
+                vote_window.un_hide()
+                break
+            elif event in ('Next', 'MouseWheel:Down', 'Down:40', 'Next:34'):
+                i += 1
+                if i >= num_files:
+                    i -= num_files
+                filename = os.path.join(self.folder_path, self.image_files[i])
+            elif event in ('Prev', 'MouseWheel:Up', 'Up:38', 'Prior:33'):
+                i -= 1
+                if i < 0:
+                    i = num_files + i
+                filename = os.path.join(self.folder_path, self.image_files[i])
+            elif event == 'listbox':            # something from the listbox
+                f = values["listbox"][0]            # selected filename
+                filename = os.path.join(self.folder_path, f)  # read this file
+                i = self.image_files.index(f)                 # update running index
+            else:
+                filename = os.path.join(self.folder_path, self.image_files[i])
+
+            listbox = window['listbox']
+            listbox.update(set_to_index=[i], scroll_to_index=i)
+            # update window with new image
+            image_elem.update(data=self.convert_to_bytes(filename))
+            # update window with filename
+            filename_display_elem.update(filename)
+            # update page display
+            file_num_display_elem.update('File {} of {}'.format(i+1, num_files))
+
+        window.close()
+
 
     def run(self):
         api_key = os.getenv('GEMINI_API_KEY')
@@ -350,6 +407,7 @@ class ImageRanker:
                 sg.Button('Gemini Eval - left photo', key='-EVAL_LEFT_PHOTO-'),
                 sg.Button('Gemini Comparison', key='-COMPARE_PHOTO-'),
                 sg.Button('Export ranking to CSV', key='-EXPORT_CSV-'),
+                sg.Button('Switch to View-Only mode', key='-SWITCH_VIEW_ONLY-'),
                 sg.Button('Exit App', key='-EXIT-')
             ],
             [sg.Text('Current Ranking:')],
@@ -406,7 +464,10 @@ class ImageRanker:
                 self.get_image_eval(api_key)
             elif event == '-COMPARE_PHOTO-':
                 self.get_image_comparison(api_key, window)
-        
+            elif event == '-SWITCH_VIEW_ONLY-':
+                window.hide()
+                self.get_view_mode_window(window)
+                
         window.close()
 
 
