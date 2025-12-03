@@ -326,7 +326,7 @@ class ImageRanker:
                 print(f'Error writing to file {cache_path} : {e}')
 
 
-    def get_view_mode_window(self):
+    def get_view_mode_window(self, vote_window):
         num_files = len(self.image_files)
         filename = os.path.join(self.folder_path, self.image_files[0])  # name of first file in list
         image_elem = sg.Image(data=self.convert_to_bytes(filename))
@@ -350,9 +350,10 @@ class ImageRanker:
         while True:
             # read the form
             event, values = window.read()
-            print(event, values)
+            
             # perform button and keyboard operations
             if event == sg.WIN_CLOSED:
+                vote_window.un_hide()
                 break
             elif event in ('Next', 'MouseWheel:Down', 'Down:40', 'Next:34'):
                 i += 1
@@ -371,6 +372,8 @@ class ImageRanker:
             else:
                 filename = os.path.join(self.folder_path, self.image_files[i])
 
+            listbox = window['listbox']
+            listbox.update(set_to_index=[i], scroll_to_index=i)
             # update window with new image
             image_elem.update(data=self.convert_to_bytes(filename))
             # update window with filename
@@ -462,8 +465,9 @@ class ImageRanker:
             elif event == '-COMPARE_PHOTO-':
                 self.get_image_comparison(api_key, window)
             elif event == '-SWITCH_VIEW_ONLY-':
-                self.get_view_mode_window()
-        
+                window.hide()
+                self.get_view_mode_window(window)
+                
         window.close()
 
 
