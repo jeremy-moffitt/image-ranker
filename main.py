@@ -373,7 +373,7 @@ class ImageRanker:
                 i = self.image_files.index(f)                 # update running index
             elif event == '-SWITCH_VOTE_MODE-':
                 window.hide()
-                self.get_vote_mode(window)
+                self.get_vote_mode()
             else:
                 filename = os.path.join(self.folder_path, self.image_files[i])
 
@@ -468,7 +468,7 @@ class ImageRanker:
                 self.get_image_comparison(api_key, window)
             elif event == '-SWITCH_VIEW_ONLY-':
                 window.hide()
-                self.get_view_mode_window(window)
+                self.get_view_mode_window()
                  
         window.close()
 
@@ -506,10 +506,10 @@ class ImageRanker:
                 break
             elif event == '-VOTE_MODE-':
                 window.hide()
-                self.get_vote_mode(window)
+                self.get_vote_mode()
             elif event == '-VIEW_ONLY_MODE-':
                 window.hide()
-                self.get_view_mode_window(window)
+                self.get_view_mode_window()
                 
         window.close()
    
