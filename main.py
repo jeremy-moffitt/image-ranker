@@ -4,6 +4,7 @@ import io
 import random
 import csv
 import json
+import exif
 import google.generativeai as genai
 from PIL import Image
 from dotenv import load_dotenv
@@ -331,6 +332,24 @@ class ImageRanker:
                 print(f'Error writing to file {cache_path} : {e}')
 
 
+    def get_simplified_image_details(self, image_path):
+        
+        try:
+            with open(image_path, 'rb') as img_file:
+                image = exif.Image(img_file)
+                simplified_details = []
+                simplified_details.append(
+                    [image.aperture_value,
+                    image.shutter_speed_value,
+                    image.exposure_index,
+                    image.photographic_sensitivity]
+                )
+
+            return simplified_details
+        except:
+            return None
+
+
     def get_view_mode_window(self):
         """ Switches to view-only window from the voting window
         """
@@ -341,9 +360,22 @@ class ImageRanker:
         filename_display_elem = sg.Text(filename, size=(80, 3))
         file_num_display_elem = sg.Text('File 1 of {}'.format(num_files), size=(15, 1))
 
+        image_exif_header = ["Aperture:", "Shutter Speed:", "Exposure:", "ISO:"]
+
         # define layout, show and read the form
         col = [[filename_display_elem],
-            [image_elem]]
+            [image_elem],
+            [sg.Text("Image details")],
+            [sg.Table(
+                        values=[],
+                        headings=image_exif_header,
+                        key='-IMAGE_DETAILS-',
+                        auto_size_columns=True,
+                        num_rows=1,
+                        expand_x=True,
+                        expand_y=False
+                        )
+                    ]]
 
         col_files = [[sg.Listbox(values=self.image_files, change_submits=True, size=(60, 30), key='listbox')],
                     [sg.Button('Gemini Eval', key='-GEMINI_EVAL-', size=(10, 2)), sg.Button('Prev', size=(8, 2)), sg.Button('Next', size=(8, 2)),file_num_display_elem],
@@ -383,9 +415,13 @@ class ImageRanker:
                 f = values["listbox"][0]            # selected filename
                 filename = os.path.join(self.folder_path, f)  # read this file
                 i = self.image_files.index(f)                 # update running index
+                window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
             elif event == '-GEMINI_EVAL-':
                 filename = os.path.join(self.folder_path, self.image_files[i])
                 self.get_image_eval(api_key, filename)
+            elif event == '-IMAGE_DETAILS-':
+                filename = os.path.join(self.folder_path, self.image_files[i])
+                
             elif event == '-SWITCH_VOTE_MODE-':
                 window.close()
                 self.get_vote_mode()
@@ -394,6 +430,7 @@ class ImageRanker:
                 filename = os.path.join(self.folder_path, self.image_files[i])
 
             listbox = window['listbox']
+            window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
             listbox.update(set_to_index=[i], scroll_to_index=i)
             # update window with new image
             image_elem.update(data=self.convert_to_bytes(filename))
@@ -401,6 +438,7 @@ class ImageRanker:
             filename_display_elem.update(filename)
             # update page display
             file_num_display_elem.update('File {} of {}'.format(i+1, num_files))
+            
 
         window.close()
 

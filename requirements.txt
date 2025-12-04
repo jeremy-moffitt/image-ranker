@@ -1,4 +1,5 @@
 FreeSimpleGUI==5.2.0.post1
 pillow==12.0.0
 google-generativeai==0.8.5
-dotenv
+dotenv==0.9.9
+ExifRead==3.5.1
