@@ -332,6 +332,8 @@ class ImageRanker:
 
 
     def get_view_mode_window(self):
+        """ Switches to view-only window from the voting window
+        """
         api_key = os.getenv('GEMINI_API_KEY')
         num_files = len(self.image_files)
         filename = os.path.join(self.folder_path, self.image_files[0])  # name of first file in list
@@ -352,6 +354,9 @@ class ImageRanker:
 
         window = sg.Window('Image Browser', layout, return_keyboard_events=True, finalize=True,
                         use_default_focus=False)
+
+        window_keys = ('listbox', 'Next', 'Prev', '-GEMINI_EVAL-', '-SWITCH_VOTE_MODE-', '-EXIT-')
+        self.set_clicky_cursors(window, window_keys)
 
         # loop reading the user input and displaying image, filename
         i = 0
@@ -399,6 +404,20 @@ class ImageRanker:
 
         window.close()
 
+
+    def set_clicky_cursors(self, window, keys):
+        """ helper method to set the cursor to indicate buttons and images are clickable
+            reduces clutter in main
+
+            
+            Parameters
+            window: window object
+                the window that contains the elements to be updated
+            keys : iterable of str
+               the keys of the elements to be updated
+        """
+        for key in keys:
+            window[key].set_cursor('hand2')
 
     def get_vote_mode(self):
         
@@ -461,6 +480,9 @@ class ImageRanker:
         img2_data = self.convert_to_bytes(img2_path)
         window['-IMAGE1-'].update(data=img1_data)
         window['-IMAGE2-'].update(data=img2_data)
+        window_keys = ('-IMAGE1-', '-IMAGE2-', '-TOGGLE_KEEP_WINNER-', '-EVAL_LEFT_PHOTO-', 
+                       '-COMPARE_PHOTO-', '-EXPORT_CSV-', '-SWITCH_VIEW_ONLY-', '-EXIT-')
+        self.set_clicky_cursors(window, window_keys)
 
         window['-RANK_TABLE-'].update(values=self.get_ranking_table_data())
 
