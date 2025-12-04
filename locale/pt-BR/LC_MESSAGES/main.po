@@ -1,0 +1,114 @@
+# Message Catalog for image-ranker
+msgid ""
+msgstr ""
+"Content-type: text/plan; charset=UTF-8\n"
+"Language: pt-BRn\n"
+
+msgid "language for Gemini response"
+msgstr "Brazilian Portuguese"
+
+# main.py
+msgid "next"
+msgstr "Próximo"
+
+msgid "prev"
+msgstr "Anterior"
+
+msgid "Image Browser"
+msgstr "Navegador de Imagens"
+
+msgid "Switch to Vote Mode"
+msgstr "Alternar para o Modo de Votação"
+
+msgid "Exit App"
+msgstr "Sair do Aplicativo"
+
+msgid "No images were found in the selected folder. Exiting."
+msgstr "Nenhuma imagem foi encontrada na pasta selecionada. Saindo."
+
+msgid "No Gemini Key in .env! Cannot perform AI evaluation."
+msgstr "Nenhuma chave Gemini no .env! Não é possível realizar a avaliação por IA."
+
+msgid "Please select a valid folder"
+msgstr "Por favor, selecione uma pasta válida"
+
+msgid "Choose a mode:"
+msgstr "Escolha um modo:"
+
+msgid "Vote Mode"
+msgstr "Modo de Votação"
+
+msgid "View Images"
+msgstr "Visualizar Imagens"
+
+msgid "Image Ranker"
+msgstr "Classificador de Imagens"
+
+msgid "Image Ranker - Mode Selection"
+msgstr "Classificador de Imagens - Seleção de Modo"
+
+msgid "Gemini Eval - left photo"
+msgstr "Avaliação do Gemini - foto da esquerda"
+
+msgid "Gemini Eval"
+msgstr "Avaliação do Gemini"
+
+msgid "Gemini Comparison"
+msgstr "Comparação do Gemini"
+
+msgid "Export ranking to CSV"
+msgstr "Exportar classificação para CSV"
+
+msgid "Switch to View-Only mode"
+msgstr "Alternar para o modo Somente Visualização"
+
+msgid "Keep winner for next vote:"
+msgstr "Manter vencedor para o próximo voto:"
+
+msgid "Copy to Clipboard"
+msgstr "Copiar para a Área de Transferência"
+
+msgid "Close"
+msgstr "Fechar"
+
+msgid "File 1 of {}"
+msgstr "Arquivo 1 de {}"
+
+msgid "File {} of {}"
+msgstr "Arquivo {} de {}"
+
+msgid "Image folder to open"
+msgstr "Pasta de imagens para abrir"
+
+msgid "CSV created successfully!"
+msgstr "CSV criado com sucesso!"
+
+msgid "Gemini evaluation for {filename}:\n\n {response}"
+msgstr "Avaliação do Gemini para {filename}:\n\n {response}"
+
+msgid "Text copied to clipboard!"
+msgstr "Texto copiado para a área de transferência!"
+
+msgid "Gemini comparison for {file1} vs {file2}:\n\n {response}"
+msgstr "Comparação do Gemini para {file1} vs {file2}:\n\n {response}"
+
+msgid "Gemini voted for image2: {file1}"
+msgstr "O Gemini votou na imagem 2: {file1}"
+
+msgid "Gemini voted for image2: {file2}"
+msgstr "O Gemini votou na imagem 2: {file2}"
+
+msgid "Select Language:"
+msgstr "Selecionar Idioma:"
+
+msgid "Current Ranking:"
+msgstr "Ranking Atual:"
+
+msgid "rank"
+msgstr "Classificação"
+
+msgid "image name"
+msgstr "Nome da imagem"
+
+msgid "votes"
+msgstr "Votos"

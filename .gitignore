@@ -6,3 +6,4 @@ images
 rank.csv
 local_cache
 __pycache__/
+*.mo
