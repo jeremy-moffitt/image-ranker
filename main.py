@@ -7,8 +7,9 @@ import json
 import gettext
 import google.generativeai as genai
 from PIL import Image
+from PIL.ExifTags import TAGS
 from dotenv import load_dotenv
-from utils.imageutils import resize_image
+from utils.imageutils import resize_image, get_exif_data, sanitise_exif_value
 
 load_dotenv()
 
@@ -357,6 +358,20 @@ class ImageRanker:
                 print(f'Error writing to file {cache_path} : {e}')
 
 
+    def get_simplified_image_details(self, image_path):
+        details = get_exif_data(image_path)
+        
+        required_details = ['ApertureValue', "ShutterSpeedValue", "ExposureIndex", "ISOSpeedRatings"]
+        simplified_details = []
+        if details is None:
+            return []
+        else: 
+            filtered_dict = {k: details[k] for k in required_details if k in details}
+            simplified_details.append(list(filtered_dict.values()))
+            
+        return simplified_details
+
+
     def get_view_mode_window(self):
         """ Switches to view-only window from the voting window
         """
@@ -367,9 +382,23 @@ class ImageRanker:
         filename_display_elem = sg.Text(filename, size=(80, 3))
         file_num_display_elem = sg.Text(self._('File 1 of {}').format(num_files), size=(15, 1))
 
+        image_exif_header = ["Aperture:", "Shutter Speed:", "Exposure:", "ISO:"]
+
         # define layout, show and read the form
         col = [[filename_display_elem],
-            [image_elem]]
+            [image_elem],
+            [sg.Text("Image details")],
+            [sg.Table(
+                        values=[],
+                        headings=image_exif_header,
+                        key='-IMAGE_DETAILS-',
+                        auto_size_columns=True,
+                        num_rows=1,
+                        expand_x=True,
+                        expand_y=False,
+                        hide_vertical_scroll=True
+                        )
+                    ]]
 
         col_files = [[sg.Listbox(values=self.image_files, change_submits=True, size=(60, 30), key='listbox')],
                     [sg.Button(self._('Gemini Eval'), key='-GEMINI_EVAL-', size=(10, 2)), sg.Button(self._('prev'), key='Prev', size=(8, 2)),
@@ -389,6 +418,7 @@ class ImageRanker:
         i = 0
         listbox = window['listbox']
         listbox.update(set_to_index=[i], scroll_to_index=i)
+        window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
         while True:
             # read the form
             event, values = window.read()
@@ -410,9 +440,13 @@ class ImageRanker:
                 f = values["listbox"][0]            # selected filename
                 filename = os.path.join(self.folder_path, f)  # read this file
                 i = self.image_files.index(f)                 # update running index
+                
             elif event == '-GEMINI_EVAL-':
                 filename = os.path.join(self.folder_path, self.image_files[i])
                 self.get_image_eval(api_key, filename)
+            elif event == '-IMAGE_DETAILS-':
+                filename = os.path.join(self.folder_path, self.image_files[i])
+                window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
             elif event == '-SWITCH_VOTE_MODE-':
                 window.close()
                 self.get_vote_mode()
@@ -421,12 +455,15 @@ class ImageRanker:
                 filename = os.path.join(self.folder_path, self.image_files[i])
 
             listbox = window['listbox']
+            
             listbox.update(set_to_index=[i], scroll_to_index=i)
             # update window with new image
             image_elem.update(data=self.convert_to_bytes(filename))
             # update window with filename
             filename_display_elem.update(filename)
             # update page display
+            window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
+            
             file_num_display_elem.update(self._('File {} of {}').format(i+1, num_files))
 
         window.close()
