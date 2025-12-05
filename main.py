@@ -4,11 +4,11 @@ import io
 import random
 import csv
 import json
-import exif
 import google.generativeai as genai
 from PIL import Image
+from PIL.ExifTags import TAGS
 from dotenv import load_dotenv
-from utils.imageutils import resize_image
+from utils.imageutils import resize_image, get_exif_data, sanitise_exif_value
 
 load_dotenv()
 
@@ -333,21 +333,18 @@ class ImageRanker:
 
 
     def get_simplified_image_details(self, image_path):
-        
-        try:
-            with open(image_path, 'rb') as img_file:
-                image = exif.Image(img_file)
-                simplified_details = []
-                simplified_details.append(
-                    [image.aperture_value,
-                    image.shutter_speed_value,
-                    image.exposure_index,
-                    image.photographic_sensitivity]
-                )
-
-            return simplified_details
-        except:
-            return None
+        details = get_exif_data(image_path)
+        print(details)
+        print(type(details))
+        required_details = ['ApertureValue', "ShutterSpeedValue", "ExposureIndex", "ISOSpeedRatings"]
+        simplified_details = []
+        if details is None:
+            return []
+        else: 
+            filtered_dict = {k: details[k] for k in required_details if k in details}
+            simplified_details.append(list(filtered_dict.values()))
+            
+        return simplified_details
 
 
     def get_view_mode_window(self):
@@ -371,7 +368,7 @@ class ImageRanker:
                         headings=image_exif_header,
                         key='-IMAGE_DETAILS-',
                         auto_size_columns=True,
-                        num_rows=1,
+                        num_rows=2,
                         expand_x=True,
                         expand_y=False
                         )
@@ -394,6 +391,7 @@ class ImageRanker:
         i = 0
         listbox = window['listbox']
         listbox.update(set_to_index=[i], scroll_to_index=i)
+        window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
         while True:
             # read the form
             event, values = window.read()
@@ -415,13 +413,13 @@ class ImageRanker:
                 f = values["listbox"][0]            # selected filename
                 filename = os.path.join(self.folder_path, f)  # read this file
                 i = self.image_files.index(f)                 # update running index
-                window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
+                
             elif event == '-GEMINI_EVAL-':
                 filename = os.path.join(self.folder_path, self.image_files[i])
                 self.get_image_eval(api_key, filename)
             elif event == '-IMAGE_DETAILS-':
                 filename = os.path.join(self.folder_path, self.image_files[i])
-                
+                window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
             elif event == '-SWITCH_VOTE_MODE-':
                 window.close()
                 self.get_vote_mode()
@@ -430,7 +428,7 @@ class ImageRanker:
                 filename = os.path.join(self.folder_path, self.image_files[i])
 
             listbox = window['listbox']
-            window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
+            
             listbox.update(set_to_index=[i], scroll_to_index=i)
             # update window with new image
             image_elem.update(data=self.convert_to_bytes(filename))
@@ -438,6 +436,7 @@ class ImageRanker:
             filename_display_elem.update(filename)
             # update page display
             file_num_display_elem.update('File {} of {}'.format(i+1, num_files))
+            window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
             
 
         window.close()
@@ -461,7 +460,7 @@ class ImageRanker:
         
         api_key = os.getenv('GEMINI_API_KEY')
         ranking_header = ['rank', 'image_name', 'votes']
-        keep_winner = False;
+        keep_winner = False
    
         layout = [
             [
