@@ -1,0 +1,114 @@
+# Message Catalog for image-ranker
+msgid ""
+msgstr ""
+"Content-type: text/plan; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "language for Gemini response"
+msgstr "English"
+
+# main.py
+msgid "next"
+msgstr "Next"
+
+msgid "prev"
+msgstr "Previous"
+
+msgid "Image Browser"
+msgstr "Image Browser"
+
+msgid "Switch to Vote Mode"
+msgstr "Switch to Vote Mode"
+
+msgid "Exit App"
+msgstr "Exit App"
+
+msgid "No images were found in the selected folder. Exiting."
+msgstr "No images were found in the selected folder. Exiting."
+
+msgid "No Gemini Key in .env! Cannot perform AI evaluation."
+msgstr "No Gemini Key in .env! Cannot perform AI evaluation."
+
+msgid "Please select a valid folder"
+msgstr "Please select a valid folder"
+
+msgid "Choose a mode:"
+msgstr "Choose a mode:"
+
+msgid "Vote Mode"
+msgstr "Vote Mode"
+
+msgid "View Images"
+msgstr "View Images"
+
+msgid "Image Ranker"
+msgstr "Image Ranker"
+
+msgid "Image Ranker - Mode Selection"
+msgstr "Image Ranker - Mode Selection"
+
+msgid "Gemini Eval - left photo"
+msgstr "Gemini Eval - left photo"
+
+msgid "Gemini Eval"
+msgstr "Gemini Eval"
+
+msgid "Gemini Comparison"
+msgstr "Gemini Comparison"
+
+msgid "Export ranking to CSV"
+msgstr "Export ranking to CSV"
+
+msgid "Switch to View-Only mode"
+msgstr "Switch to View-Only mode"
+
+msgid "Keep winner for next vote:"
+msgstr "Keep winner for next vote:"
+
+msgid "Copy to Clipboard"
+msgstr "Copy to Clipboard"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "File 1 of {}"
+msgstr "File 1 of {}"
+
+msgid "File {} of {}"
+msgstr "File {} of {}"
+
+msgid "Image folder to open"
+msgstr "Image folder to open"
+
+msgid "CSV created successfully!"
+msgstr "CSV created successfully!"
+
+msgid "Gemini evaluation for {filename}:\n\n {response}"
+msgstr "Gemini evaluation for {filename}:\n\n {response}"
+
+msgid "Text copied to clipboard!"
+msgstr "Text copied to clipboard!"
+
+msgid "Gemini comparison for {file1} vs {file2}:\n\n {response}"
+msgstr "Gemini comparison for {file1} vs {file2}:\n\n {response}"
+
+msgid "Gemini voted for image2: {file1}"
+msgstr "Gemini voted for image2: {file1}"
+
+msgid "Gemini voted for image2: {file2}"
+msgstr "Gemini voted for image2: {file2}"
+
+msgid "Select Language:"
+msgstr "Select Language:"
+
+msgid "Current Ranking:"
+msgstr "Current Ranking:"
+
+msgid "rank"
+msgstr "Rank"
+
+msgid "image name"
+msgstr "Image name"
+
+msgid "votes"
+msgstr "Votes"

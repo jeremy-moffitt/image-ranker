@@ -31,6 +31,8 @@ Getting Started
 5. Create the environment variable file and paste your Gemini API Key.
    This is only necessary is the key is not already available as an env variable.
    `cp .env.example .env`
+6. Compile localization files (repeat this step after adding new msgid/msgstr entries)
+   `python3 locale_build.py`
 
 Using gemini to evaluate photos
 ===============================

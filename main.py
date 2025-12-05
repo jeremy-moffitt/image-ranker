@@ -4,6 +4,7 @@ import io
 import random
 import csv
 import json
+import gettext
 import google.generativeai as genai
 from PIL import Image
 from PIL.ExifTags import TAGS
@@ -25,6 +26,22 @@ class ImageRanker:
         self.toggle_btn_off = b'iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAABmJLR0QA/wD/AP+gvaeTAAAED0lEQVRYCe1WTWwbRRR+M/vnv9hO7BjHpElMKSlpqBp6gRNHxAFVcKM3qgohQSqoqhQ45YAILUUVDRxAor2VAweohMSBG5ciodJUSVqa/iikaePEP4nj2Ovdnd1l3qqJksZGXscVPaylt7Oe/d6bb9/svO8BeD8vA14GvAx4GXiiM0DqsXv3xBcJU5IO+RXpLQvs5yzTijBmhurh3cyLorBGBVokQG9qVe0HgwiXLowdy9aKsY3g8PA5xYiQEUrsk93JTtjd1x3siIZBkSWQudUK4nZO1w3QuOWXV+HuP/fL85klAJuMCUX7zPj4MW1zvC0Ej4yMp/w++K2rM9b70sHBYCjo34x9bPelsgp/XJksZ7KFuwZjr3732YcL64ttEDw6cq5bVuCvgy/sje7rT0sI8PtkSHSEIRIKgCQKOAUGM6G4VoGlwiqoVd2Za9Vl8u87bGJqpqBqZOj86eEHGNch+M7otwHJNq4NDexJD+59RiCEQG8qzslFgN8ibpvZNsBifgXmFvJg459tiOYmOElzYvr2bbmkD509e1ylGEZk1Y+Ssfan18n1p7vgqVh9cuiDxJPxKPT3dfGXcN4Tp3dsg/27hUQs0qMGpRMYjLz38dcxS7Dm3nztlUAb38p0d4JnLozPGrbFfBFm79c8hA3H2AxcXSvDz7/+XtZE1kMN23hjV7LTRnKBh9/cZnAj94mOCOD32gi2EUw4FIRUMm6LGhyiik86nO5NBdGRpxYH14bbjYfJteN/OKR7UiFZVg5T27QHYu0RBxoONV9W8KQ7QVp0iXdE8fANUGZa0QAvfhhXlkQcmjJZbt631oIBnwKmacYoEJvwiuFgWncWnXAtuVBBEAoVVXWCaQZzxmYuut68b631KmoVBEHMUUrJjQLXRAQVSxUcmrKVHfjWWjC3XOT1FW5QrWpc5IJdQhDKVzOigEqS5dKHMVplnNOqrmsXqUSkn+YzWaHE9RW1FeXL7SKZXBFUrXW6jIV6YTEvMAUu0W/G3kcxPXP5ylQZs4fa6marcWvvZfJu36kuHjlc/nMSuXz+/ejxgqPFpuQ/xVude9eu39Jxu27OLvBGoMjrUN04zrNMbgVmOBZ96iPdPZmYntH5Ls76KuxL9NyoLA/brav7n382emDfHqeooXyhQmARVhSnAwNNMx5bu3V1+habun5nWdXhwJZ2C5mirTesyUR738sv7g88UQ0rEkTDlp+1wwe8Pf0klegUenYlgyg7bby75jUTITs2rhCAXXQ2vwxz84vlB0tZ0wL4NEcLX/04OrrltG1s8aOrHhk51SaK0us+n/K2xexBxljcsm1n6x/Fuv1PCWGiKOaoQCY1Vb9gWPov50+fdEqd21ge3suAlwEvA14G/ucM/AuppqNllLGPKwAAAABJRU5ErkJggg=='
         self.toggle_btn_on = b'iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAABmJLR0QA/wD/AP+gvaeTAAAD+UlEQVRYCe1XzW8bVRCffbvrtbP+2NhOD7GzLm1VoZaPhvwDnKBUKlVyqAQ3/gAkDlWgPeVQEUCtEOIP4AaHSI0CqBWCQyXOdQuRaEFOk3g3IMWO46+tvZ+PeZs6apq4ipON1MNafrvreTPzfvub92bGAOEnZCBkIGQgZOClZoDrh25y5pdjruleEiX+A+rCaQo05bpuvJ/+IHJCSJtwpAHA/e269g8W5RbuzF6o7OVjF8D3Pr4tSSkyjcqfptPDMDKSleW4DKIggIAD5Yf+Oo4DNg6jbUBlvWLUNutAwZu1GnDjzrcXzGcX2AHw/emFUV6Sfk0pqcKpEydkKSo9q3tkz91uF5aWlo1Gs/mYc+i7tz4//19vsW2AU9O381TiioVCQcnlRsWeQhD3bJyH1/MiFLICyBHiuzQsD1arDvypW7DR9nzZmq47q2W95prm+I9fXfqXCX2AF2d+GhI98Y8xVX0lnxvl2UQQg0csb78ag3NjEeD8lXZ7pRTgftmCu4864OGzrq+5ZU0rCa3m+NzXlzvoAoB3+M+SyWQuaHBTEzKMq/3BMbgM+FuFCDBd9kK5XI5PJBKqLSev+POTV29lKB8rT0yMD0WjUSYLZLxzNgZvIHODOHuATP72Vwc6nQ4Uiw8MUeBU4nHS5HA6TYMEl02wPRcZBJuv+ya+UCZOIBaLwfCwQi1Mc4QXhA+PjWRkXyOgC1uIhW5Qd8yG2TK7kSweLcRGKKVnMNExWWBDTQsH9qVmtmzjiThQDs4Qz/OUSGTwcLwIQTLW58i+yOjpXDLqn1tgmDzXzRCk9eDenjo9yhvBmlizrB3V5dDrNTuY0A7opdndStqmaQLPC1WCGfShYRgHdLe32UrV3ntiH9LliuNrsToNlD4kruN8v75eafnSgC6Luo2+B3fGKskilj5muV6pNhk2Qqg5v7lZ51nBZhNBjGrbxfI1+La5t2JCzfD8RF1HTBGJXyDzs1MblONulEqPDVYXgwDIfNx91IUVbAbY837GMur+/k/XZ75UWmJ77ou5mfM1/0x7vP1ls9XQdF2z9uNsPzosXPNFA5m0/EX72TBSiqsWzN8z/GZB08pWq9VeEZ+0bjKb7RTD2i1P4u6r+bwypo5tZUumEcDAmuC3W8ezIqSGfE6g/sTd1W5p5bKjaWubrmWd29Fu9TD0GlYlmTx+8tTJoZeqYe2BZC1/JEU+wQR5TVEUPptJy3Fs+Vkzgf8lemqHumP1AnYoMZSwsVEz6o26i/G9Lgitb+ZmLu/YZtshfn5FZDPBCcJFQRQ+8ih9DctOFvdLIKHH6uUQnq9yhFu0bec7znZ+xpAGmuqef5/wd8hAyEDIQMjAETHwP7nQl2WnYk4yAAAAAElFTkSuQmCC'
 
+        self.available_languages = ['en', 'pt-BR']
+        self.set_language()
+
+    def set_language(self, language='en'):
+        domain='main'
+        localedir = os.path.join(os.path.dirname(__file__), 'locale')
+
+        # Load the translation
+        try:
+            # Use find to locate the .mo file based on the system's locale settings
+            # or the specified languages
+            translation = gettext.translation(domain, localedir, languages=[language], fallback=True)
+            self._ = translation.gettext # Assign the translation function to '_'
+        except FileNotFoundError:
+            # Fallback if no translation is found for the specified language
+            self._ = gettext.gettext # Use the default gettext if no translation is available
 
     def select_folder(self):
         """ Pop-up folder selection for the user to choose the location of images on the filesystem
@@ -33,10 +50,11 @@ class ImageRanker:
         cache_data = self.read_rankings_from_disk()
         if 'latest_folder' in cache_data:
             default_folder_path = cache_data['latest_folder']
-        folder = sg.popup_get_folder('Image folder to open', default_path=default_folder_path)
+        folder = sg.popup_get_folder(self._('Image folder to open'), default_path=default_folder_path)
 
         if not folder:
             sg.popup_cancel('Canceling')
+            # TODO - do we need the pop-up here?
             raise SystemExit()
 
         self.folder_path = folder
@@ -157,7 +175,7 @@ class ImageRanker:
         max_filename_len = max(max_filename_len, 20)
 
         lines = [f"{'Image Filename':<{max_filename_len}} | Votes", "-" * (max_filename_len + 20)]
-        
+
         for rank, (image, votes) in enumerate(sorted_rankings, 1):
             lines.append(f"{image:<{max_filename_len}} | {votes}")
         
@@ -195,7 +213,7 @@ class ImageRanker:
             writer.writerow(header)
             writer.writerows(data[0:])
 
-        sg.popup_ok('CSV created successfully!')
+        sg.popup_ok(self._('CSV created successfully!'))
 
 
     def get_image_eval(self, api_key, filename):
@@ -210,14 +228,19 @@ class ImageRanker:
         model = genai.GenerativeModel(model_name='gemini-2.5-flash')
         # filename = os.path.join(self.folder_path, image_name)
         image_for_gemini = Image.open(filename)
-        response = model.generate_content(['Rate this image for sharpness on a scale of 0-10', image_for_gemini])
-        formatted_text = f'Gemini evaluation for {filename}:\n\n {response.text}'
+        prompt_text = '''Rate this image for sharpness on a scale of 0-10,
+                         the language for details in the response should be: ''' + self._('language for Gemini response')
+        prompt_text = " ".join(prompt_text.split()) # removes extraneous whitespace
+
+        response = model.generate_content([prompt_text, image_for_gemini])
+        formated_translate = self._('Gemini evaluation for {filename}:\n\n {response}')
+        formatted_text = f"{formated_translate.format(filename=filename, response=response.text)}"
         layout = [
             [sg.Text(text=formatted_text)],
             [sg.HorizontalSeparator()],
             [
-                sg.Button('Copy to Clipboard', key='-COPY_TO_CLIPBOARD-'),
-                sg.Button('Close')
+                sg.Button(self._('Copy to Clipboard'), key='-COPY_TO_CLIPBOARD-'),
+                sg.Button(self._('Close'), key='Close')
             ]
         ]
         window = sg.Window('Gemini - Image Evaluation', layout)
@@ -227,8 +250,8 @@ class ImageRanker:
             if sec_event == sg.WIN_CLOSED or sec_event == 'Close':
                 break
             elif sec_event == '-COPY_TO_CLIPBOARD-':
-                sg.clipboard_set(f'Gemini evaluation for {filename}:\n\n {response.text}')
-                sg.popup(f'Text copied to clipboard!')
+                sg.clipboard_set(formatted_text)
+                sg.popup(self._('Text copied to clipboard!'))
 
         window.close()
     
@@ -252,14 +275,17 @@ class ImageRanker:
         response = model.generate_content(['''Compare these two images and indicate which picture is technically superior. 
                                               Start your response with 1 or 2 to indicate which image is the answer before giving details. 
                                               If they are equivalent, randomly select 1 or 2.''', image1, image2])
-        formatted_text = f'Gemini comparison for {file1} vs {file2}:\n\n {response.text}'
+        formatted_translate = self._('Gemini comparison for {file1} vs {file2}:\n\n {response}')
+        formatted_text = f'{formatted_translate.format(file1=file1, file2=file2, response=response.text)}'
 
         if(response.text.startswith('1')):
-            sg.popup(f'Gemini voted for image1: {file1}')
+            vote_translation = self._('Gemini voted for image1: {file1}')
+            sg.popup(f'{vote_translation.format(file1=file1)}')
             self.record_selection('left')
             self.cycle_image(window, 'right', cycle_both)
         else:
-            sg.popup(f'Gemini voted for image2: {file2}')
+            vote_translation = self._('Gemini voted for image2: {file2}')
+            sg.popup(f'{vote_translation.format(file2=file2)}')
             self.record_selection('right')
             self.cycle_image(window, 'left', cycle_both)
         print(f'Gemini full voting response:\n {formatted_text}')
@@ -354,7 +380,7 @@ class ImageRanker:
         filename = os.path.join(self.folder_path, self.image_files[0])  # name of first file in list
         image_elem = sg.Image(data=self.convert_to_bytes(filename))
         filename_display_elem = sg.Text(filename, size=(80, 3))
-        file_num_display_elem = sg.Text('File 1 of {}'.format(num_files), size=(15, 1))
+        file_num_display_elem = sg.Text(self._('File 1 of {}').format(num_files), size=(15, 1))
 
         image_exif_header = ["Aperture:", "Shutter Speed:", "Exposure:", "ISO:"]
 
@@ -375,13 +401,14 @@ class ImageRanker:
                     ]]
 
         col_files = [[sg.Listbox(values=self.image_files, change_submits=True, size=(60, 30), key='listbox')],
-                    [sg.Button('Gemini Eval', key='-GEMINI_EVAL-', size=(10, 2)), sg.Button('Prev', size=(8, 2)), sg.Button('Next', size=(8, 2)),file_num_display_elem],
-                    [sg.Button('Switch to Vote Mode', key='-SWITCH_VOTE_MODE-'),
-                     sg.Button('Exit App', key='-EXIT-')]]
+                    [sg.Button(self._('Gemini Eval'), key='-GEMINI_EVAL-', size=(10, 2)), sg.Button(self._('prev'), key='Prev', size=(8, 2)),
+                                sg.Button(self._('next'), key='Next', size=(8, 2)),file_num_display_elem],
+                    [sg.Button(self._('Switch to Vote Mode'), key='-SWITCH_VOTE_MODE-'),
+                     sg.Button(self._('Exit App'), key='-EXIT-')]]
 
         layout = [[sg.Column(col_files), sg.Column(col)]]
 
-        window = sg.Window('Image Browser', layout, return_keyboard_events=True, finalize=True,
+        window = sg.Window(self._('Image Browser'), layout, return_keyboard_events=True, finalize=True,
                         use_default_focus=False)
 
         window_keys = ('listbox', 'Next', 'Prev', '-GEMINI_EVAL-', '-SWITCH_VOTE_MODE-', '-EXIT-')
@@ -435,9 +462,9 @@ class ImageRanker:
             # update window with filename
             filename_display_elem.update(filename)
             # update page display
-            file_num_display_elem.update('File {} of {}'.format(i+1, num_files))
             window['-IMAGE_DETAILS-'].update(values=self.get_simplified_image_details(filename))
             
+            file_num_display_elem.update(self._('File {} of {}').format(i+1, num_files))
 
         window.close()
 
@@ -459,8 +486,8 @@ class ImageRanker:
     def get_vote_mode(self):
         
         api_key = os.getenv('GEMINI_API_KEY')
-        ranking_header = ['rank', 'image_name', 'votes']
-        keep_winner = False
+        ranking_header = [self._('rank'), self._('image name'), self._('votes')]
+        keep_winner = False;
    
         layout = [
             [
@@ -474,18 +501,18 @@ class ImageRanker:
             ],
             [sg.HorizontalSeparator()],
             [
-                sg.Text('Keep winner for next vote:'),
+                sg.Text(self._('Keep winner for next vote:')),
                 sg.Button('', image_data=self.toggle_btn_off, key='-TOGGLE_KEEP_WINNER-', button_color=(sg.theme_background_color(), sg.theme_background_color()), border_width=0)
             ],
             [sg.HorizontalSeparator()],
             [
-                sg.Button('Gemini Eval - left photo', key='-EVAL_LEFT_PHOTO-'),
-                sg.Button('Gemini Comparison', key='-COMPARE_PHOTO-'),
-                sg.Button('Export ranking to CSV', key='-EXPORT_CSV-'),
-                sg.Button('Switch to View-Only mode', key='-SWITCH_VIEW_ONLY-'),
-                sg.Button('Exit App', key='-EXIT-')
+                sg.Button(self._('Gemini Eval - left photo'), key='-EVAL_LEFT_PHOTO-'),
+                sg.Button(self._('Gemini Comparison'), key='-COMPARE_PHOTO-'),
+                sg.Button(self._('Export ranking to CSV'), key='-EXPORT_CSV-'),
+                sg.Button(self._('Switch to View-Only mode'), key='-SWITCH_VIEW_ONLY-'),
+                sg.Button(self._('Exit App'), key='-EXIT-')
             ],
-            [sg.Text('Current Ranking:')],
+            [sg.Text(self._('Current Ranking:'))],
             [
                 sg.Table(
                     values=[],
@@ -499,15 +526,15 @@ class ImageRanker:
             ]
         ]
 
-        window = sg.Window('Image Ranker', layout, finalize=True, resizable=True)
+        window = sg.Window(self._('Image Ranker'), layout, finalize=True, resizable=True)
 
         if not self.update_images():
-            sg.popup_error('No images were found in the selected folder. Exiting.')
+            sg.popup_error(self._('No images were found in the selected folder. Exiting.'))
             window.close()
             return
         
         if not api_key:
-            sg.popup_error('No Gemini Key in .env! Cannot perform AI evaluation.')
+            sg.popup_error(self._('No Gemini Key in .env! Cannot perform AI evaluation.'))
             window.close()
             return
         
@@ -556,29 +583,33 @@ class ImageRanker:
 
     def run(self):
         if not self.select_folder():
-            sg.popup_error('Please select a valid folder')
+            sg.popup_error(self._('Please select a valid folder'))
             return
         
         ballot_icon = './assets/ballot-icon.png'
         view_image_icon = './assets/view-image-icon.png'
 
         layout = [
-            [sg.Text("Choose a mode:")],
+            [sg.Text(self._('Choose a mode:'), key='-CHOOSE_MODE_TEXT-')],
             [
                 
                 sg.Column([
                         [sg.Button(image_data=resize_image(ballot_icon, (100, 100)), border_width=0, button_color=(sg.theme_background_color(), sg.theme_background_color()), key='-VOTE_MODE-')],
-                        [sg.Text("Vote Mode")]
+                        [sg.Text(self._('Vote Mode'), key='-VOTE_MODE_TEXT-')]
                 ], element_justification='center'),
                 sg.VSeparator(),
                 sg.Column([
                         [sg.Button(image_data=resize_image(view_image_icon, (100, 100)), border_width=0, button_color=(sg.theme_background_color(), sg.theme_background_color()), key='-VIEW_ONLY_MODE-')],
-                        [sg.Text("View Images")]
+                        [sg.Text(self._('View Images'), key='-VIEW_IMAGES_TEXT-')]
                 ], element_justification='center'),
+            ],
+            [
+                sg.Text(self._('Select Language:'), key='-SELECT_LANGUAGE_TEXT-'),
+                sg.Combo(self.available_languages, default_value='en', key='-LANG_SELECT-', enable_events=True)
             ]
         ]
 
-        window = sg.Window('Image Ranker - Mode Selection', layout, finalize=True, resizable=True)
+        window = sg.Window(self._('Image Ranker - Mode Selection'), layout, finalize=True, resizable=True)
 
         while True:
             event, values = window.read()
@@ -593,6 +624,12 @@ class ImageRanker:
                 window.close()
                 self.get_view_mode_window()
                 break
+            elif event == '-LANG_SELECT-':
+                self.set_language(values['-LANG_SELECT-'])
+                window['-CHOOSE_MODE_TEXT-'].update(self._('Choose a mode:'))
+                window['-VOTE_MODE_TEXT-'].update(self._('Vote Mode'))
+                window['-VIEW_IMAGES_TEXT-'].update(self._('View Images'))
+                window['-SELECT_LANGUAGE_TEXT-'].update(self._('Select Language:'))
 
         window.close()
    
