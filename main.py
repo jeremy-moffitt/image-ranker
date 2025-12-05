@@ -334,8 +334,7 @@ class ImageRanker:
 
     def get_simplified_image_details(self, image_path):
         details = get_exif_data(image_path)
-        print(details)
-        print(type(details))
+        
         required_details = ['ApertureValue', "ShutterSpeedValue", "ExposureIndex", "ISOSpeedRatings"]
         simplified_details = []
         if details is None:
@@ -368,9 +367,10 @@ class ImageRanker:
                         headings=image_exif_header,
                         key='-IMAGE_DETAILS-',
                         auto_size_columns=True,
-                        num_rows=2,
+                        num_rows=1,
                         expand_x=True,
-                        expand_y=False
+                        expand_y=False,
+                        hide_vertical_scroll=True
                         )
                     ]]
 
